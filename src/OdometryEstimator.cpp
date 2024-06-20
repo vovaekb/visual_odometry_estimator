@@ -24,23 +24,13 @@ namespace cpp_practicing {
     using string_vector = std::vector<std::string>;
 
     OdometryEstimator::OdometryEstimator(const std::string& frame_images_file_path, int fast_threshold) : 
-            m_frames_files_path(frame_images_file_path), m_fast_threshold(fast_threshold) {
+            m_frames_files_path(frame_images_file_path), {
 
         m_frame_images.reserve(MAX_FRAMES_NUMBER);
     }
 
     void OdometryEstimator::run() {
         std::cout << "run visual odometry estimation" << std::endl;
-
-        // Load folder with camera frames
-        // Take a pair of sequential images (camera frames)
-        // Process (undistort) them
-        // Estimate features on first frame and track these to the second one
-        // Use RANSAC to calcualate Essential matrix
-        // Estimate pose (R, t) btw these frames
-        // Apply scale information(optional)
-        // Save pose to vector
-        // Optional: build trajectory from list of poses
 
         loadFrameImages();
 
@@ -90,12 +80,12 @@ namespace cpp_practicing {
 
         auto new_frame = m_frame_images[m_last_camera_frame_index + 1];
 
-        std::vector<uchar> status;
+        uchar_vector status;
         trackFeatures(new_frame, status);
 
         if (new_frame.keypoints.size() < m_minimum_track_features_number)
         {
-            /* TODO: perform feature re-detection */
+            /* perform feature re-detection */
             detectImageFeatures(new_frame);
         }
         m_last_camera_frame = new_frame;
@@ -103,29 +93,34 @@ namespace cpp_practicing {
     }
 
     void OdometryEstimator::detectImageFeatures(FrameSample& frame_image) {
-        std::vector<cv::KeyPoint> keypoints;
-        FAST(frame_image.image_data, keypoints, m_fast_threshold, m_fast_nonmax_suppression);
+        keypoints_vector keypoints;
+        FAST(frame_image.image_data,
+            keypoints, 
+            KeypointDetParameters::THRESHOLD, 
+            KeypointDetParameters::NONMAX_SUPPRESSION
+        );
         KeyPoint::convert(keypoints, frame_image.keypoints, std::vector<int>());
 
     }
 
-    void OdometryEstimator::trackFeatures(FrameSample& frame_image, std::vector<uchar>& status) {
+    void OdometryEstimator::trackFeatures(FrameSample& frame_image, uchar_vector& status) {
+        // std::cout << "track features" << std::endl;
         std::vector<float> err;
         cv::Size window_size = cv::Size(21, 21);
-        auto term_crit = cv::TermCriteria(
-            cv::TermCriteria::COUNT+cv::TermCriteria::EPS, 
-            30, 0.01
+        auto term_criteria = cv::TermCriteria(
+            cv::TermCriteria::COUNT+cv::TermCriteria::EPS,
+            TrackingParameters::TERMINATION_MAX_COUNT, 
+            TrackingParameters::TERMINATION_EPSILON
         );
-
-        auto min_eigen_threshold = 0.001;
-        auto maximal_pyramid_level = 3; 
+ 
         cv::calcOpticalFlowPyrLK(
             m_last_camera_frame.image_data,
             frame_image.image_data,
             m_last_camera_frame.keypoints,
             frame_image.keypoints, status, err, window_size,
-            maximal_pyramid_level, 
-            term_crit, min_eigen_threshold);
+            TrackingParameters::MAX_PYRAMID_LEVEL, 
+            term_criteria,
+            TrackingParameters::MIN_EIGEN_THRESHOLD);
 
         // getting rid of points for which the KLT tracking failed or those who have gone outside the frame
         int index_correction = 0;
@@ -141,14 +136,43 @@ namespace cpp_practicing {
                 m_last_camera_frame.keypoints.erase(m_last_camera_frame.keypoints.begin() + i - index_correction);
                 frame_image.keypoints.erase(frame_image.keypoints.begin() + i - index_correction);
                 index_correction++;
+                
             }
             
         }
         
     }
         
-    void OdometryEstimator::calculateTransformation() {}
+    void OdometryEstimator::calculateTransformation(FrameSample& frame_image) {
+        // Apply RANSAC to remove outliers
+        // recovering the pose and the essential matrix
+        cv::Mat E, R, t, mask;
+        E = cv::findEssentialMat(
+            frame_image.keypoints,
+            m_last_camera_frame.keypoints,
+            calibration_params.focal,
+            calibration_params.pp,
+            cv::RANSAC,
+            RansacParameters::PROBABILITY,
+            RansacParameters::THRESHOLD,
+            mask
+        );
+        cv::recoverPose(
+            E, frame_image.keypoints,
+            m_last_camera_frame.keypoints,
+            R, t, 
+            calibration_params.focal,
+            calibration_params.pp,
+            mask);
+        for (size_t i = 0; i < R.rows; ++i)
+        {
+            for (size_t j = 0; j < R.cols; ++j)
+            {
+                std::cout << R.at<double>(i, j) << "\n";
+            }
+            std::cout << "\n";
+        }
+        
+    }
     
-    void OdometryEstimator::calculateNewPose() {}
-
 }

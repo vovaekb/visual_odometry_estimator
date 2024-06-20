@@ -30,6 +30,9 @@ namespace cpp_practicing {
     public:
         using string_vector = std::vector<std::string>;
         using view_matches_vector = std::vector<DMatch>;
+        using uchar_vector = std::vector<uchar>;
+        using point2f_vector = std::vector<cv::Point2f>;
+        using keypoints_vector = std::vector<cv::KeyPoint>;
 
         /**
          * @brief Struct for representing Rotation quaternion
@@ -42,10 +45,26 @@ namespace cpp_practicing {
             float z;
         };
 
+        /**
+         * @brief Struct for representing instrinsic camera parameters
+         */
+        struct CalibrationData
+        {
+            float focal = 718.8560;
+            cv::Point2d pp;
+
+            CalibrationData() : pp (cv::Point2d(607.1928, 185.2157)) {}
+        };
+
+        /**
+         * @brief Struct for representing transformation matrix of view image
+         */
         struct TransformPose
         {
             using Ptr = std::shared_ptr<TransformPose>;
+            /**!< rotation matrix */
             Rotation rotation;
+            /**!< translation vector */
             std::vector<float> translation;
         };
 
@@ -54,11 +73,48 @@ namespace cpp_practicing {
          */
         struct FrameSample
         {
+            /**!< file name */
             std::string file_name;
+            /**!< image matrix */
             Mat image_data;
-            std::vector<cv::Point2f> keypoints;
-            Mat descriptors;
+            /**!< vector of keypoints */
+            point2f_vector keypoints;
+            /**!< number of inliers in match between the view image and the query image */
             int inliers_number;
+        };
+
+        /**
+         * @brief Struct for Ransac parameters
+         */
+        struct RansacParameters {
+            /**!< desirable level of confidence (probability) */
+            static constexpr auto PROBABILITY = 0.999;
+            /**!< Similarity threshold for filtering outliers */
+            static constexpr auto THRESHOLD = 1.0;
+        };
+
+        /**
+         * @brief Struct for FAST keypoint detector parameters
+         */
+        struct KeypointDetParameters {
+            /**!< desirable level of confidence (probability) */
+            static constexpr auto NONMAX_SUPPRESSION = 0.999;
+            /**!< Similarity threshold for filtering outliers */
+            static constexpr auto THRESHOLD = 20;
+        };
+
+        /**
+         * @brief Struct for Tracking algorithm parameters
+         */
+        struct TrackingParameters {
+            /**!< maximal pyramid level number */
+            static constexpr auto MAX_PYRAMID_LEVEL = 3;
+            /**!< minimum eigen value of a 2x2 normal matrix of optical flow */
+            static constexpr auto MIN_EIGEN_THRESHOLD = 0.001;
+            /**!< desired accuracy */
+            static constexpr auto TERMINATION_EPSILON = 0.01;
+            /**!< maximum number of iterations/elements */
+            static constexpr auto TERMINATION_MAX_COUNT = 0.01;
         };
         
         OdometryEstimator(const std::string& frame_images_file_path, int fast_threshold);
@@ -78,8 +134,6 @@ namespace cpp_practicing {
         std::vector<TransformPose::Ptr> frame_sequence_poses;
         // TransformPose result_pose;
         Eigen::MatrixXf result_pose_rotation;
-        Eigen::Array33f camera_matrix;
-        std::string m_query_metadata_file;
         /// file path to directory with camera frame images
         std::string m_frames_files_path;
         /// minimal required number of features for tracking
@@ -102,13 +156,19 @@ namespace cpp_practicing {
          * @brief Detect image features on the camera frame image 
          * */
         void detectImageFeatures(FrameSample& frame_image);
+        /**
+         * @brief Find matching keypoints between the current and last camera frames and calculate pose transformation 
+         * */
         void matchFramePair();
         /**
          * @brief Track image features between neighboring camera frames using Lukas-Kanade algorithm 
          * */
-        void trackFeatures(FrameSample& frame_image, std::vector<uchar>& status);
-        void calculateTransformation();
-        void calculateNewPose();
+        void trackFeatures(FrameSample& frame_image, uchar_vector& status);
+        /**
+         * @brief Recovery the pose of new camera frame from the last camera frame 
+         * */
+        void calculateTransformation(FrameSample& frame_image);
+        
     };
 
 } // namespace cpp_practicing
