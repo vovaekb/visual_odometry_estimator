@@ -174,5 +174,9 @@ namespace cpp_practicing {
         }
         
     }
+
+    auto OdometryEstimator::getFrameSamples () const -> std::vector<FrameSample> {
+        return m_frame_images;
+    }
     
 }

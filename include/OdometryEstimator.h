@@ -122,6 +122,12 @@ namespace cpp_practicing {
          * @brief Start pipeline for estimating odometry  
          * */
         void run();
+
+        /**
+         * @brief Get frame images 
+         * @return Vector of frame images
+         * */
+        auto getFrameSamples () const -> std::vector<FrameSample>;
         
     private:
         /// last processed frame from camera
