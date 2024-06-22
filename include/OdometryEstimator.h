@@ -4,6 +4,10 @@
  */
 
 
+// https://avisingh599.github.io/vision/monocular-vo/
+// data: https://www.cvlibs.net/datasets/kitti/eval_odometry.php
+
+
 #include <vector>
 #include <memory>
 #include <filesystem>
@@ -15,8 +19,11 @@
 
 #include <Eigen/Dense>
 
+#include <nlohmann/json.hpp>
+
 
 using namespace cv;
+// using Mat = cv::Mat;
 
 namespace cpp_practicing {
     
@@ -45,9 +52,6 @@ namespace cpp_practicing {
             float z;
         };
 
-        /**
-         * @brief Struct for representing instrinsic camera parameters
-         */
         struct CalibrationData
         {
             float focal = 718.8560;
@@ -56,16 +60,17 @@ namespace cpp_practicing {
             CalibrationData() : pp (cv::Point2d(607.1928, 185.2157)) {}
         };
 
-        /**
-         * @brief Struct for representing transformation matrix of view image
-         */
         struct TransformPose
         {
             using Ptr = std::shared_ptr<TransformPose>;
-            /**!< rotation matrix */
             Rotation rotation;
-            /**!< translation vector */
             std::vector<float> translation;
+        };
+
+        struct ImageMetadata
+        {
+            CalibrationData calibration_data;
+            TransformPose pose;
         };
 
         /**
@@ -73,13 +78,10 @@ namespace cpp_practicing {
          */
         struct FrameSample
         {
-            /**!< file name */
             std::string file_name;
-            /**!< image matrix */
             Mat image_data;
-            /**!< vector of keypoints */
             point2f_vector keypoints;
-            /**!< number of inliers in match between the view image and the query image */
+            Mat descriptors;
             int inliers_number;
         };
 
@@ -122,6 +124,8 @@ namespace cpp_practicing {
          * @brief Start pipeline for estimating odometry  
          * */
         void run();
+
+        auto getFrameSamples () const -> std::vector<FrameSample>;
         
     private:
         /// last processed frame from camera
@@ -132,43 +136,42 @@ namespace cpp_practicing {
         std::vector<FrameSample> m_frame_images;
         /// transformation poses of frames from camera
         std::vector<TransformPose::Ptr> frame_sequence_poses;
+        /// feature detector
         // TransformPose result_pose;
         Eigen::MatrixXf result_pose_rotation;
+        Eigen::Array33f camera_matrix;
+        std::string m_query_metadata_file;
         /// file path to directory with camera frame images
         std::string m_frames_files_path;
         /// minimal required number of features for tracking
         int m_minimum_track_features_number = 1000;
+        int min_hessian = 400;
         /// index of last processed frame from camera
         int m_last_camera_frame_index = 0;
         int m_fast_threshold = 20;
         bool m_fast_nonmax_suppression = true;
+        CalibrationData calibration_params;
+        RansacParameters ransac_params;
         
+        void loadImageMetadata();
         void loadImagesPair();
         /**
          * @brief Load camera frame images from disk 
          * */
         void loadFrameImages();
-        /**
-         * @brief Start the pipeline for estimating odometry 
-         * */
         void startOdometryEstimation();
         /**
          * @brief Detect image features on the camera frame image 
          * */
         void detectImageFeatures(FrameSample& frame_image);
-        /**
-         * @brief Find matching keypoints between the current and last camera frames and calculate pose transformation 
-         * */
+        // void estimateImageFeatures(FrameSample& frame_image);
         void matchFramePair();
         /**
          * @brief Track image features between neighboring camera frames using Lukas-Kanade algorithm 
          * */
         void trackFeatures(FrameSample& frame_image, uchar_vector& status);
-        /**
-         * @brief Recovery the pose of new camera frame from the last camera frame 
-         * */
         void calculateTransformation(FrameSample& frame_image);
-        
+        void calculateNewPose();
     };
 
 } // namespace cpp_practicing
