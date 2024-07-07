@@ -75,6 +75,12 @@ namespace cpp_practicing {
             TransformPose pose;
         };
 
+        struct ImageMetadata
+        {
+            CalibrationData calibration_data;
+            TransformPose pose;
+        };
+
         /**
          * @brief Struct for representing single image sample
          */
