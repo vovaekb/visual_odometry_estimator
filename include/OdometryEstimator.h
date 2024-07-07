@@ -63,8 +63,10 @@ namespace cpp_practicing {
         struct TransformPose
         {
             using Ptr = std::shared_ptr<TransformPose>;
-            Rotation rotation;
-            std::vector<float> translation;
+            // Rotation rotation;
+            cv::Mat rotation;
+            // std::vector<float> translation;
+            cv::Mat translation;
         };
 
         struct ImageMetadata
@@ -83,6 +85,10 @@ namespace cpp_practicing {
             point2f_vector keypoints;
             Mat descriptors;
             int inliers_number;
+
+            bool operator==(const FrameSample& other) const {
+                return file_name == other.file_name;
+            }
         };
 
         /**
@@ -126,6 +132,10 @@ namespace cpp_practicing {
         void run();
 
         auto getFrameSamples () const -> std::vector<FrameSample>;
+
+        auto getLastCameraFrameIndex () const -> int;
+
+        auto getLastCameraFrame () const -> FrameSample;
         
     private:
         /// last processed frame from camera

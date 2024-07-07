@@ -98,11 +98,6 @@ namespace cpp_practicing {
 
             }
         }
-
-        // for (auto &&view : view_images)
-        // {
-        //     std::cout << "view image " << view.file_name << std::endl;
-        // }
     }
 
     void OdometryEstimator::startOdometryEstimation() {
@@ -110,18 +105,21 @@ namespace cpp_practicing {
 
         while(m_last_camera_frame_index != m_frame_images.size() - 1)
         {
-            if (m_last_camera_frame_index == 15) break;
+            // std::cout << "start process new frame (m_last_camera_frame_index = " << m_last_camera_frame_index << ")" << std::endl;
+            // if (m_last_camera_frame_index == 15) break;
             auto first_frame_idx = m_last_camera_frame_index;
             auto second_frame_idx = first_frame_idx + 1;
             // std::cout << "match pair with indices: " << first_frame_idx << ", " << second_frame_idx << std::endl;
             matchFramePair();
             m_last_camera_frame_index++;
         }
+
+        // TODO: calculate trajectory passed by vehicle
         
     }
 
     void OdometryEstimator::matchFramePair() {
-        std::cout << "\nmatch two frame images" << std::endl;
+        // std::cout << "\nmatch two frame images" << std::endl;
 
         if (m_last_camera_frame_index == 0)
         {
@@ -205,7 +203,7 @@ namespace cpp_practicing {
         
     void OdometryEstimator::calculateTransformation(FrameSample& frame_image) {
         // Apply RANSAC to remove outliers
-        std::cout << "Applying RANSAC to remove outliers ...\n";
+        // std::cout << "Applying RANSAC to remove outliers ...\n";
         // recovering the pose and the essential matrix
         cv::Mat E, R, t, mask;
         E = cv::findEssentialMat(
@@ -225,15 +223,15 @@ namespace cpp_practicing {
             calibration_params.focal,
             calibration_params.pp,
             mask);
-        for (size_t i = 0; i < R.rows; ++i)
-        {
-            for (size_t j = 0; j < R.cols; ++j)
-            {
-                std::cout << R.at<double>(i, j) << "\n";
-            }
-            std::cout << "\n";
+        // for (size_t i = 0; i < R.rows; ++i)
+        // {
+        //     for (size_t j = 0; j < R.cols; ++j)
+        //     {
+        //         std::cout << R.at<double>(i, j) << "\n";
+        //     }
+        //     std::cout << "\n";
             
-        }
+        // }
         
     }
     
@@ -243,6 +241,14 @@ namespace cpp_practicing {
 
     auto OdometryEstimator::getFrameSamples () const -> std::vector<FrameSample> {
         return m_frame_images;
+    }
+
+    auto OdometryEstimator::getLastCameraFrameIndex () const -> int {
+        return m_last_camera_frame_index;
+    }
+
+    auto OdometryEstimator::getLastCameraFrame () const -> FrameSample {
+        return m_last_camera_frame;
     }
 
 }
