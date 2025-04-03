@@ -18,7 +18,8 @@
 
 using namespace cv;
 
-namespace cpp_practicing {
+namespace cpp_practicing 
+{
     
     const int MAX_FRAMES_NUMBER = 100;
 
@@ -86,21 +87,23 @@ namespace cpp_practicing {
         /**
          * @brief Struct for Ransac parameters
          */
-        struct RansacParameters {
+        struct RansacParameters
+        {
             /**!< desirable level of confidence (probability) */
-            static constexpr auto PROBABILITY = 0.999;
+            static constexpr float PROBABILITY = 0.999;
             /**!< Similarity threshold for filtering outliers */
-            static constexpr auto THRESHOLD = 1.0;
+            static constexpr float THRESHOLD = 1.0;
         };
 
         /**
          * @brief Struct for FAST keypoint detector parameters
          */
-        struct KeypointDetParameters {
+        struct KeypointDetParameters 
+        {
             /**!< desirable level of confidence (probability) */
-            static constexpr auto NONMAX_SUPPRESSION = 0.999;
+            static constexpr float NONMAX_SUPPRESSION = 0.999;
             /**!< Similarity threshold for filtering outliers */
-            static constexpr auto THRESHOLD = 20;
+            static constexpr int THRESHOLD = 20;
         };
 
         /**
@@ -108,13 +111,13 @@ namespace cpp_practicing {
          */
         struct TrackingParameters {
             /**!< maximal pyramid level number */
-            static constexpr auto MAX_PYRAMID_LEVEL = 3;
+            static constexpr int MAX_PYRAMID_LEVEL = 3;
             /**!< minimum eigen value of a 2x2 normal matrix of optical flow */
-            static constexpr auto MIN_EIGEN_THRESHOLD = 0.001;
+            static constexpr float MIN_EIGEN_THRESHOLD = 0.001;
             /**!< desired accuracy */
-            static constexpr auto TERMINATION_EPSILON = 0.01;
+            static constexpr float TERMINATION_EPSILON = 0.01;
             /**!< maximum number of iterations/elements */
-            static constexpr auto TERMINATION_MAX_COUNT = 0.01;
+            static constexpr float TERMINATION_MAX_COUNT = 0.01;
         };
         
         OdometryEstimator(const std::string& frame_images_file_path, int fast_threshold);
