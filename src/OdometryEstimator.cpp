@@ -24,7 +24,7 @@ namespace cpp_practicing {
     using string_vector = std::vector<std::string>;
 
     OdometryEstimator::OdometryEstimator(const std::string& frame_images_file_path, int fast_threshold) : 
-            m_frames_files_path(frame_images_file_path), {
+            m_frames_files_path(frame_images_file_path), m_fast_threshold(fast_threshold) {
 
         m_frame_images.reserve(MAX_FRAMES_NUMBER);
     }

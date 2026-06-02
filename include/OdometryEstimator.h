@@ -11,8 +11,6 @@
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
-#include "opencv2/xfeatures2d.hpp"
-
 #include <Eigen/Dense>
 
 
@@ -151,6 +149,7 @@ namespace cpp_practicing
         int m_last_camera_frame_index = 0;
         int m_fast_threshold = 20;
         bool m_fast_nonmax_suppression = true;
+        CalibrationData calibration_params;
         
         void loadImagesPair();
         /**

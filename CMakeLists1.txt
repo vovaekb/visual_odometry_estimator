@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16.0)
 
-project(visual_odometry_estimator)
+project(camera_pose_estimation_lib)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_CXX_STANDARD 17)
@@ -26,36 +26,31 @@ INCLUDE_DIRECTORIES(${OpenCV_INCLUDE_DIRS})
 # Eigen
 find_package (Eigen3 3.3 REQUIRED NO_MODULE)
 
+# # Conan
 
 message( "CMAKE_BINARY_DIR : " ${CMAKE_BINARY_DIR} )
+include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
 
-include_directories("include")
+conan_basic_setup(TARGETS)
+
+include_directories(${CONAN_INCLUDE_DIRS} "include")
 
 # add source files
-#file(GLOB_RECURSE SOURCES "src/*.cpp")
+file(GLOB_RECURSE SOURCES "src/*.cpp")
 
-#add_library(${PROJECT_NAME} SHARED ${SOURCES}) #  STATIC
-#
-#target_link_libraries(
-#        ${PROJECT_NAME} PUBLIC
-#        ${OpenCV_LIBS}
-#        Eigen3::Eigen
-#)
+add_library(${PROJECT_NAME} SHARED ${SOURCES}) #  STATIC
 
-add_library(OdometryEstimator SHARED src/OdometryEstimator.cpp)
 target_link_libraries(
-        OdometryEstimator PUBLIC
+        ${PROJECT_NAME} PUBLIC
         ${OpenCV_LIBS}
         Eigen3::Eigen
-)
+        CONAN_PKG::nlohmann_json
+) 
+
+# # install
+# install(TARGETS ${PROJECT_NAME} DESTINATION lib) 
+# install(DIRECTORY include/ DESTINATION include
+#         FILES_MATCHING PATTERN "*.h")
 
 # add tests
-#add_subdirectory(test)
-
-add_executable(vo_test src/main.cpp)
-
-target_link_libraries(vo_test
-        ${OpenCV_LIBS}
-        Eigen3::Eigen
-        OdometryEstimator
-)
+add_subdirectory(test)
